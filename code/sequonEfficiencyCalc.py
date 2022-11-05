@@ -6,11 +6,11 @@ POU = ["G","Y","N","S","C","Q","T"]
 POS = ["H","R","K"]
 # function for sequon efficiency
 def calcSequonEfficiency(sequence: str, glycoIndex: int):
-    print(sequence)
+    #print("Calculating sequon efficiency for: "+ sequence)
     score: float = -0.5070
     # check if index is correct
     if sequence[glycoIndex] != "N":
-        print("given index does not point to N residue")
+        #print("given index does not point to N residue")
         return -1
     # calculate score
     # if nonpositive at i-2 add 1.3292
@@ -28,27 +28,28 @@ def calcSequonEfficiency(sequence: str, glycoIndex: int):
     # if POU at i+1 add 3.9373
     if sequence[glycoIndex+1] in POU:
         score += 3.9373
-
     return score
 
+def extractSequonEfficiency():
 
-# read in data
-data = pandas.read_csv('../data/GlycosylationSites',sep='\t')
-# fetch human only data
-data = data.loc[data["proteinName"].str.contains("HUMAN")].dropna()
-print(data.head())
-# calculate sequon efficiency test
-print("TEST 1")
-print(calcSequonEfficiency("ARGLTNYSKIL", 5) == 11.4107)
-print("TEST 2")
-print(calcSequonEfficiency("ARGADNGTKIL", 5) == 4.7595)
-# calculate for the whole dataset
-data["sequonEfficiency"] = [calcSequonEfficiency(sequence, 10) for sequence in data["sequence"]]
-# write to file
-data = data.drop(data[data["sequonEfficiency"] == -1.0].index)
-data = data.reset_index()
-data.to_csv("../data/humanGlycoSitesScored.tsv", sep="\t")
+    # read in data
+    data = pandas.read_csv('../data/dpPTMextended.tsv',sep='\t')
+    # fetch human only data
+    data = data.loc[data["proteinName"].str.contains("HUMAN")].dropna()
+    # calculate sequon efficiency test
+    testModel()
+    # calculate for the whole dataset
+    print(">Calculating sequon efficiency")
+    data["sequonEfficiency"] = [calcSequonEfficiency(sequence, 10) for sequence in data["sequence"]]
+    # write to file
+    data = data.drop(data[data["sequonEfficiency"] == -1.0].index)
+    data = data.reset_index(drop=True)
+    data.to_csv("../data/dpPTMextended.tsv", sep="\t", index=False)
+    print(">DONE")
 
-
-
-
+def testModel():
+    print(">Testing model")
+    if calcSequonEfficiency("ARGLTNYSKIL", 5) == 11.4107 and calcSequonEfficiency("ARGADNGTKIL", 5) == 4.7595:
+        print(">Model works")
+    else:
+        print(">Model is broken")

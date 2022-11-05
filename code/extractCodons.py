@@ -1,16 +1,58 @@
+import sys
+
 import pandas as pd
 import numpy as np
-def clipCDNA(seq: str):
-    maxPos = len(seq)-1
+
+def checkIfCDNAisProtein(cdnaSequence: str, protSequence):
+    translatedProt = translateCDNA(splitCodons(cdnaSequence[0:30]))
+    return translatedProt == protSequence[0:9]
+
+def clipCDNA(entry):
+    cdnaSeq = entry["cdna"]
+    protSeq = entry["proteinSequence"]
+    maxPos = len(cdnaSeq) - 1
     pos = 0
     while maxPos-pos > 3:
-        if seq[pos] == "A" and seq[pos+1] == "T" and seq[pos+2] == "G":
-            return seq[pos:]
+        if cdnaSeq[pos] == "A" and cdnaSeq[pos + 1] == "T" and cdnaSeq[pos + 2] == "G":
+            if checkIfCDNAisProtein(cdnaSeq[pos:], protSeq):
+                return cdnaSeq[pos:(pos+len(protSeq)*3)]
+            else:
+                pos+=1
         else:
             pos += 1
 
     print("no atg found")
     return -1
+
+geneticCode = {
+    "TTT": "F", "TTC": "F",
+    "TTA": "L", "TTG": "L", "CTT": "L", "CTC": "L", "CTA": "L", "CTG": "L",
+    "ATT": "I", "ATC": "I", "ATA": "I",
+    "ATG": "M",
+    "GTT": "V", "GTC": "V", "GTA": "V", "GTG": "V",
+    "TCT": "S", "TCC": "S", "TCA": "S", "TCG": "S", "AGT": "S", "AGC": "S",
+    "CCT": "P", "CCC": "P", "CCA": "P", "CCG": "P",
+    "ACT": "T", "ACC": "T", "ACA": "T", "ACG": "T",
+    "GCT": "A", "GCC": "A", "GCA": "A", "GCG": "A",
+    "TAT": "Y", "TAC": "Y",
+    "CAT": "H", "CAC": "H",
+    "CAA": "Q", "CAG": "Q",
+    "AAT": "N", "AAC": "N",
+    "AAA": "K", "AAG": "K",
+    "GAT": "D", "GAC": "D",
+    "GAA": "E", "GAG": "E",
+    "TGT": "C", "TGC": "C",
+    "TGG": "W",
+    "CGT": "R", "CGC": "R", "CGA": "R", "CGG": "R", "AGA": "R", "AGG": "R",
+    "GGT": "G", "GGC": "G", "GGA": "G", "GGG": "G",
+    "TAA": "stop", "TAG": "stop", "TGA": "stop"
+}
+
+def translateCDNA(codons):
+    seq = []
+    for codon in codons:
+        seq.append(geneticCode.get(codon))
+    return ''.join(seq)
 
 def splitCodons(seq: str):
     maxPos = len(seq)-1
@@ -63,20 +105,92 @@ fractionFrequencies = {
     "GTA": 0.11, "GCA": 0.23, "GAA": 0.42, "GGA": 0.25,
     "GTG": 0.47, "GCG": 0.11, "GAG": 0.58, "GGG": 0.25
 }
-
+# https://www.cs.tau.ac.il/~tamirtul/MTDR/mu_vals.html
+decodingTime = {
+"AAA":0.14788,
+"AAC":0.14034,
+"AAG":0.12458,
+"AAT":0.15498,
+"ACA":0.15344,
+"ACC":0.12808,
+"ACG":0.13043,
+"ACT":0.15349,
+"AGA":0.14815,
+"AGC":0.13401,
+"AGG":0.14382,
+"AGT":0.15579,
+"ATA":0.16686,
+"ATC":0.12393,
+"ATG":0.14733,
+"ATT":0.13501,
+"CAA":0.17789,
+"CAC":0.14571,
+"CAG":0.13826,
+"CAT":0.16813,
+"CCA":0.15097,
+"CCC":0.11139,
+"CCG":0.10966,
+"CCT":0.14516,
+"CGA":0.15941,
+"CGC":0.08957,
+"CGG":0.10514,
+"CGT":0.12995,
+"CTA":0.15401,
+"CTC":0.13435,
+"CTG":0.13518,
+"CTT":0.16164,
+"GAA":0.16382,
+"GAC":0.14829,
+"GAG":0.13094,
+"GAT":0.16581,
+"GCA":0.15615,
+"GCC":0.1045,
+"GCG":0.08279,
+"GCT":0.13372,
+"GGA":0.15957,
+"GGC":0.09991,
+"GGG":0.11195,
+"GGT":0.12311,
+"GTA":0.14702,
+"GTC":0.13617,
+"GTG":0.12615,
+"GTT":0.14843,
+"TAC":0.15038,
+"TAT":0.15317,
+"TCA":0.16693,
+"TCC":0.13484,
+"TCG":0.1222,
+"TCT":0.15756,
+"TGC":0.13681,
+"TGG":0.15278,
+"TGT":0.16268,
+"TTA":0.17189,
+"TTC":0.14625,
+"TTG":0.16597,
+"TTT":0.15944,
+"TAA": 0,
+"TGA": 0,
+"TAG": 0
+}
 def assignTranslationSpeedScores(codons: [str]):
     frequencies = []
     for codon in codons:
-        frequencies.append(fractionFrequencies.get(codon))
+        frequencies.append(decodingTime[codon])
     return frequencies
 
+def extractCodons():
+    print(">Extracting codons")
+    dpPTM = pd.read_csv("../data/dpPTMextended.tsv", sep="\t")
+    dpPTM = dpPTM.dropna().reset_index(drop=True)
+    dpPTM["cdna"] = [clipCDNA(row) for index, row in dpPTM.iterrows()]
+    dpPTM = dpPTM.drop(dpPTM[dpPTM["cdna"] == -1.0].index)
+    dpPTM["codons"] = np.nan
+    dpPTM["codons"] = [splitCodons(cdna) for cdna in dpPTM["cdna"]]
 
-glycoSitesData = pd.read_csv("../data/glycoSitesCdna.csv", sep=",").drop(labels=["Unnamed: 0.1", "Unnamed: 0"], axis=1)
-glycoSitesData = glycoSitesData.dropna().reset_index(drop=True)
+    print(">Assigning translation speed scores")
+    dpPTM["frequencies"] = np.nan
+    dpPTM["frequencies"] = [assignTranslationSpeedScores(codons) for codons in dpPTM["codons"]]
+    dpPTM.to_csv("../data/dpPTMextended.tsv", sep="\t", index=False)
+    print(">DONE")
 
-glycoSitesData["cdna"] = [clipCDNA(cdna) for cdna in glycoSitesData["cdna"]]
-glycoSitesData["codons"] = np.nan
-glycoSitesData["codons"] = [splitCodons(cdna) for cdna in glycoSitesData["cdna"]]
-glycoSitesData["frequencies"] = np.nan
-glycoSitesData["frequencies"] = [assignTranslationSpeedScores(codons) for codons in glycoSitesData["codons"]]
-glycoSitesData.to_csv("../data/codonsExtract.tsv", sep="\t")
+extractCodons()
