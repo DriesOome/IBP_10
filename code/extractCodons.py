@@ -176,28 +176,28 @@ decodingTime = {
 #Function that calculates codon frequency within a protein
 def calcFrequencyInProt(codons):
     #input = list of codons for a protein
-    dict = {}
+    relativeFreq = {}
     #total number of codons
     total = len(codons)
     
     for codon in codons:
     # Add 1 to the value corresponding to the 'codon' key (and set to 1 if it doesn't exist yet)
-        dict[codon] = dict.get(codon, 0) + 1
-    #dict.items() returns a list of occurrences, so we can use that alongside 'total' to compute relative frequency
-    relativeFreq = [(codon, count / total * 100) for codon, count in dict.items()]
+        relativeFreq[codon] = relativeFreq.get(codon, 0) + 1
+    #relativeFreq.items() returns a list of occurrences, so we can use that alongside 'total' to compute relative frequency
+    relativeFreq = {codon: (count / total * 100) for (codon, count) in relativeFreq.items()}
     
     #printing result in %
-    for codon, pct in sorted(relativeFreq, key=lambda x: x[0]):
-        print(codon, f"{pct:.2f}%")
-#    print ("Count of all codons in the current protein is : \n" + str(dict)) 
+#    for codon in relativeFreq:
+#        print(codon + ", " + str(relativeFreq[codon]))
     
-    return dict
+    return relativeFreq
+
 
 def assignTranslationSpeedScores(codons: [str]):
     frequencies = []
-    dict = calcFrequencyInProt(codons)
+    relativeFreq = calcFrequencyInProt(codons)
     for codon in codons:
-        frequencies.append(dict[codon])
+        frequencies.append(relativeFreq[codon])
     return frequencies
 
 def extractCodons():
