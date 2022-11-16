@@ -6,7 +6,7 @@ import numpy as np
 from readFasta import read_fasta
 
 def compileMultizDataset():
-    if not os.path.exists("../data/multizDatabaseFull.csv"):
+    if not os.path.exists("../data/compiledMultizDatabase.csv"):
         print(">Compiling multiz dataset")
         csvFile = open("../data/multizDatabaseFull.csv", "w+")
         writer = csv.DictWriter(csvFile, fieldnames=["id","seq"])
