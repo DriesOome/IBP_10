@@ -10,27 +10,29 @@ def compileMultizDataset():
         print(">Compiling multiz dataset")
         csvFile = open("../data/multizDatabaseFull.csv", "w+")
         writer = csv.DictWriter(csvFile, fieldnames=["id","seq"])
-        data = pd.DataFrame(columns = ["seq"])
+        data = {}
         with open('../data/startingDatasets/knownCanonical.multiz100way.exonAA.fa') as fp:
             progress = 0
-            for name, seq in read_fasta(fp):
+            fastaDict = read_fasta(fp)
+            for name in fastaDict:
                 progress += 1
                 idsplit = (name.split(' ')[0]).split('_')
                 id = "_".join(idsplit[0:2])
-                if not id in data.index:
-                    data.loc[id] = [[-1]*(int(idsplit[3])-1)]
-                    # print(data.loc[id])
-                if not -1 in data.loc[id]["seq"]:
-                    writer.writerow({"id": id[1:], "seq": ''.join(data.loc[id]["seq"])})
-                    data.drop(id, axis=0,inplace=True)
-                else:
-                    try:
-                        data.loc[id]["seq"][int(idsplit[2])-1] = seq
-                    except:
-                        print("index out of range")
-                        data.loc[id]["seq"].append(seq)
+                subSequenceIndex = int(idsplit[2])
+                totalSubSequences = int(idsplit[3])
+                if not id in data:
+                    data[id] = [-1]*(totalSubSequences)
+                    print(">New entry made for: "+id)
+                try:
+                    data[id][subSequenceIndex-1] = fastaDict[name]
+                except Exception as e:
+                    print(e)
+                if not -1 in data[id]:
+                    writer.writerow({"id": id[1:], "seq": ''.join(data[id])})
+                    print(">Completed for: "+id)
+                    del data[id]
                 progress += 1
-                print(str(progress) + " --- " + str(len(data)))
+                print(str(progress/len(fastaDict)/2))
     else:
         print(">Multiz dataset already compiled")
 

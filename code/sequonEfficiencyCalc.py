@@ -23,7 +23,7 @@ def calcSequonEfficiency(sequence: str, glycoIndex: int):
     if sequence[glycoIndex - 1] in POU:
         score += 3.6061
     # if C, M, S, T, A, V, I, L, G at i-1 add +3.0451
-    if sequence[glycoIndex - 1] in ["C", "M", "S", "T", "C", "Q", "T"]:
+    if sequence[glycoIndex - 1] in ["C", "M", "S", "T",  "A", "V", "I", "L", "G"]:
         score += 3.0451
     # if POU at i+1 add 3.9373
     if sequence[glycoIndex+1] in POU:
