@@ -1,16 +1,24 @@
-# 
 """
 Created on Mon Nov 21 15:10:10 2022
 
 @author: janve
 """
 
-
-import RNA
 import pandas as pd
 import re
 from joblib import Parallel, delayed
- 
+from seqfold import fold
+
+def dotBracket(seq):
+    structs = fold(seq)
+    desc = ["."] * len(seq)
+    for s in structs:
+        if len(s.ij) == 1:
+            i, j = s.ij[0]
+            desc[i] = "("
+            desc[j] = ")"
+    print("".join(desc))
+    return("".join(desc))
 
 def calculatederivative(y,window):
     derivative =  []
@@ -27,21 +35,10 @@ def calculatederivative(y,window):
         derivative.append(abs(y[i-window]-y[len(y)-1]))
     return derivative
 
-
-# =============================================================================
-# # The RNA sequence
-# seq = "GAGUAGUGGAACCAGGCUAUGUUUGUGACUCGCAGACUAACA"
-#  
-# # compute minimum free energy (MFE) and corresponding structure
-# (ss, mfe) = RNA.fold(seq)
-#  
-# # print output
-# print("{}\n{} [ {:6.2f} ]".format(seq, ss, mfe))
-# =============================================================================
-
 def foldedness(seq, window):
-
-    result = RNA.fold(seq) # fixxx
+    print(seq)
+    result = dotBracket(seq) 
+    print(result + '  1')
     split_result = re.split('',result)
     foldedness = [0]*len(split_result)
     for i in range(0,len(split_result)):
@@ -64,7 +61,7 @@ def foldedness(seq, window):
 dbPTM = pd.read_csv('dpPTMextended.tsv',sep = "\t")
 window = 9
 
-results = Parallel(n_jobs=60, verbose=10)(delayed(foldedness)(seq,window) for seq in dbPTM["cdna"])
+results = Parallel(n_jobs= None, verbose=5)(delayed(foldedness)(seq,window) for seq in dbPTM["cdna"])
 for result in results:
     try:
         dbPTM.loc[result[0], "foldedness"] = result[1]
