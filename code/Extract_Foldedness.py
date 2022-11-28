@@ -8,6 +8,7 @@ import pandas as pd
 import re
 from joblib import Parallel, delayed
 from seqfold import fold
+from math import floor
 
 def dotBracket(seq):
     structs = fold(seq)
@@ -19,6 +20,28 @@ def dotBracket(seq):
             desc[j] = ")"
     print("".join(desc))
     return("".join(desc))
+
+def dotBracketlocal(seq,splitwindow):
+    seqlist= []
+    n=0
+    output = ""
+    #print(len(seq)/splitwindow)
+    for i in range(floor(len(seq)/splitwindow)): 
+        seqlist.append(seq[n:n+splitwindow])
+        #print(seq[n:n+splitwindow])
+        n+=splitwindow
+    for seqpart in seqlist:
+        structs = fold(seqpart)
+        desc = ["."] * len(seqpart)
+        for s in structs:
+            if len(s.ij) == 1:
+                i, j = s.ij[0]
+                desc[i] = "("
+                desc[j] = ")"
+        #print("".join(desc))
+        output = output + "".join(desc)
+    #print(output)
+    return output
 
 def calculatederivative(y,window):
     derivative =  []
@@ -35,9 +58,9 @@ def calculatederivative(y,window):
         derivative.append(abs(y[i-window]-y[len(y)-1]))
     return derivative
 
-def foldedness(seq, window):
+def foldedness(seq, window,splitwindow):
     print(seq)
-    result = dotBracket(seq) 
+    result = dotBracketlocal(seq,splitwindow) 
     print(result + '  1')
     split_result = re.split('',result)
     foldedness = [0]*len(split_result)
@@ -60,8 +83,9 @@ def foldedness(seq, window):
 
 dbPTM = pd.read_csv('dpPTMextended.tsv',sep = "\t")
 window = 9
+splitwindow = 25
 
-results = Parallel(n_jobs= None, verbose=5)(delayed(foldedness)(seq,window) for seq in dbPTM["cdna"])
+results = Parallel(n_jobs= None, verbose=5)(delayed(foldedness)(seq,window,splitwindow) for seq in dbPTM["cdna"])
 for result in results:
     try:
         dbPTM.loc[result[0], "foldedness"] = result[1]

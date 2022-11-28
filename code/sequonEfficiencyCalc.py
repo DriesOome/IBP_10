@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Nov 26 17:28:31 2022
+
+@author: janve
+"""
+
 import pandas
 
 # POU => G, Y, N, S, C, Q, T
@@ -29,6 +36,16 @@ def calcSequonEfficiency(sequence: str, glycoIndex: int):
     if sequence[glycoIndex+1] in POU:
         score += 3.9373
     return score
+
+def calcSequonEfficiency2(sequence: str, glycoIndex: int):
+    if sequence[glycoIndex+2] == 'S':
+        score = 0
+    elif sequence[glycoIndex+2] == 'T':
+        score = 1
+    else:
+        print('not a glycosite')
+    return score
+        
 
 def extractSequonEfficiency():
 
