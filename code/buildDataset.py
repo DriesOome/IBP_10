@@ -6,6 +6,7 @@ from extractcdna import extractCDNA
 from extractCodons import extractCodons
 from calculateConservation import calculateConservation
 from calculateSequonConservation import calculateSequonConservation
+from extractFoldedness import extractFoldedness
 # CODE full analysis
 extractEnsId()
 compileMultizDataset()
@@ -14,5 +15,6 @@ extractSequonEfficiency()
 extractCDNA()
 extractCodons()
 calculateSequonConservation()
+extractFoldedness()
 #calculateConservation()
 
